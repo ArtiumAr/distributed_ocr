@@ -8,6 +8,8 @@ Usage
 You need to create a Worker AMI and a manager AMI(and supply them to the local client), which consist of Ubuntu instances with the respective JAR uploaded to the home dir, with Java installed on both and Tesseract installed on the Worker AMI. 
 To use the client you need to provide it with the Manager/Worker AMIs. 
 
+An ARN string also needes to be provided to give the manager the necessary AWS permissions. 
+
 To run the client enter the following command:
 java -jar yourjar.jar inputFileName outputFileName n managerAmId workerAmId terminate
 
