@@ -36,7 +36,8 @@ public class Local {
         SqsClient sqs = SqsClient.builder().region(Region.US_EAST_1).build();
         S3Client s3 = S3Client.builder().build();
         Ec2Client ec2 = Ec2Client.create();
-        String amId = "ami-0addf3194abe7b95c";
+        String manager_amId = args[3];
+        String worker_amId = args[4];
         String bucket = "bucket-5rsowjzb2sn5h2281391857292017495237234348590203423411123";
         String key = "images" + local_queue_name;
         String number_of_workers = args[2];
@@ -48,7 +49,7 @@ public class Local {
         BucketSetup(s3, bucket);
         s3.putObject(PutObjectRequest.builder().bucket(bucket).key(key).build(),
                 RequestBody.fromFile(input_file));
-        create_instance(args[0], amId, "", ec2);
+        create_instance(args[0], manager_amId, worker_amId, "", ec2);
         String queue_url = createQueue(queue_name, sqs);
         JSONObject ocr_task = new JSONObject();
         String local_queue_url = createQueue(local_queue_name, sqs);
@@ -68,7 +69,7 @@ public class Local {
         if(args.length == 4) {
             JSONObject termination_msg = new JSONObject();
             termination_msg.put("name", "termination message");
-            termination_msg.put("termination_message", args[3]);
+            termination_msg.put("termination_message", args[5]);
             termination_msg.put("lines", "0");
             send_msg_request = SendMessageRequest.builder()
                     .queueUrl(queue_url)
@@ -161,7 +162,7 @@ public class Local {
         return queue_url;
     }
 
-    public static String create_instance(String name, String amiId, String instance_id, Ec2Client ec2) {
+    public static String create_instance(String name, String manager_AmiId, String worker_amId, String instance_id, Ec2Client ec2) {
         DescribeInstancesResponse status_response = ec2.describeInstances();
         boolean existsRunningManager = false;
         for(Reservation res : status_response.reservations()){
@@ -174,7 +175,7 @@ public class Local {
         if(!existsRunningManager) {
             RunInstancesRequest runRequest = RunInstancesRequest.builder()
                     .instanceType(InstanceType.T2_MICRO)
-                    .imageId(amiId)
+                    .imageId(manager_AmiId)
                     .maxCount(1)
                     .minCount(1)
                     .iamInstanceProfile(IamInstanceProfileSpecification.builder()
@@ -187,7 +188,7 @@ public class Local {
                             ("#!/bin/bash\n\n" +
                                     "echo export AWS_DEFAULT_REGION=\"us-east-1\" >> /etc/profile\n" +
                                     "cd ~\n" +
-                                    "java -jar /home/ubuntu/Manager.jar " + amiId + "\n" +
+                                    "java -jar /home/ubuntu/Manager.jar " + worker_amId + "\n" +
                                     "shutdown -h now\n").getBytes()))
                     .build();
 
