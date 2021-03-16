@@ -41,7 +41,8 @@ public class Local {
         String bucket = "bucket-5rsowjzb2sn5h2281391857292017495237234348590203423411123";
         String key = "images" + local_queue_name;
         String number_of_workers = args[2];
-            File input_file = new File(args[0]);
+        String arn = ""; 
+        File input_file = new File(args[0]);
         BufferedReader reader = new BufferedReader(new FileReader(args[0]));
         int number_of_URLs = 0;
         while (reader.readLine() != null) number_of_URLs++;
@@ -49,7 +50,7 @@ public class Local {
         BucketSetup(s3, bucket);
         s3.putObject(PutObjectRequest.builder().bucket(bucket).key(key).build(),
                 RequestBody.fromFile(input_file));
-        create_instance(args[0], manager_amId, worker_amId, "", ec2);
+        create_instance(args[0], manager_amId, worker_amId, arn, "", ec2);
         String queue_url = createQueue(queue_name, sqs);
         JSONObject ocr_task = new JSONObject();
         String local_queue_url = createQueue(local_queue_name, sqs);
@@ -162,7 +163,7 @@ public class Local {
         return queue_url;
     }
 
-    public static String create_instance(String name, String manager_AmiId, String worker_amId, String instance_id, Ec2Client ec2) {
+    public static String create_instance(String name, String manager_AmiId, String worker_amId, String arn, String instance_id, Ec2Client ec2) {
         DescribeInstancesResponse status_response = ec2.describeInstances();
         boolean existsRunningManager = false;
         for(Reservation res : status_response.reservations()){
@@ -179,10 +180,8 @@ public class Local {
                     .maxCount(1)
                     .minCount(1)
                     .iamInstanceProfile(IamInstanceProfileSpecification.builder()
-                            .arn("arn:aws:iam::952244235589:instance-profile/Manager")
+                            .arn("arn")
                             .build())
-                    .keyName("example_key_pair")
-                    .securityGroupIds("sg-0bbb058f9c7b94263")
                     .instanceInitiatedShutdownBehavior("terminate")
                     .userData(Base64.getEncoder().encodeToString(
                             ("#!/bin/bash\n\n" +
