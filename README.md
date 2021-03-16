@@ -1,6 +1,7 @@
 # distributed_ocr
 
-This an application I wrote that applies OCR to images in a distributed matter. 
+This an application I wrote that applies OCR to images in a distributed manner. The server runs on AWS EC2 instances, 
+with the clients using SQS queues to request jobs to be completed by the server. The result is then uploaded to S3.
 
 Usage
 
